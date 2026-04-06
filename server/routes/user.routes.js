@@ -19,12 +19,37 @@ const router = express.Router();
  * /api/users:
  *   get:
  *     summary: Haal alle users op
+ *     description: Retourneert alle users zonder wachtwoordvelden. Alleen toegankelijk voor ingelogde admins.
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Lijst van users
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/UserSafe'
+ *       401:
+ *         description: Niet ingelogd
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Geen admin
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Interne serverfout
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get("/", requireAuth, requireAdmin, async (_req, res) => {
   try {
@@ -41,7 +66,57 @@ router.get("/", requireAuth, requireAdmin, async (_req, res) => {
 });
 
 /**
- * Nieuwe user aanmaken.
+ * @swagger
+ * /api/users:
+ *   post:
+ *     summary: Maak een user aan
+ *     description: Maakt een nieuwe user aan. Alleen toegankelijk voor ingelogde admins.
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UserInput'
+ *     responses:
+ *       201:
+ *         description: User aangemaakt
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserSafe'
+ *       400:
+ *         description: Ongeldige input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Niet ingelogd
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Geen admin
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       409:
+ *         description: Username bestaat al
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Interne serverfout
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post("/", requireAuth, requireAdmin, async (req, res) => {
   try {
@@ -85,7 +160,65 @@ router.post("/", requireAuth, requireAdmin, async (req, res) => {
 });
 
 /**
- * User wijzigen.
+ * @swagger
+ * /api/users/{id}:
+ *   put:
+ *     summary: Werk een user bij
+ *     description: Werkt een bestaande user bij. Alleen toegankelijk voor ingelogde admins.
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Het id van de user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UserInput'
+ *     responses:
+ *       200:
+ *         description: User bijgewerkt
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserSafe'
+ *       401:
+ *         description: Niet ingelogd
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Geen admin
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: User niet gevonden
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       409:
+ *         description: Username bestaat al
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Interne serverfout
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.put("/:id", requireAuth, requireAdmin, async (req, res) => {
   try {
@@ -131,10 +264,59 @@ router.put("/:id", requireAuth, requireAdmin, async (req, res) => {
 });
 
 /**
- * User verwijderen.
- *
- * Veiligheidsmaatregel:
- * - een admin mag zichzelf niet verwijderen vanuit deze route.
+ * @swagger
+ * /api/users/{id}:
+ *   delete:
+ *     summary: Verwijder een user
+ *     description: Verwijdert een user op basis van id. Alleen toegankelijk voor ingelogde admins.
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Het id van de user
+ *     responses:
+ *       200:
+ *         description: User verwijderd
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessMessageResponse'
+ *       400:
+ *         description: Eigen account verwijderen niet toegestaan
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Niet ingelogd
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Geen admin
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: User niet gevonden
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Interne serverfout
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.delete("/:id", requireAuth, requireAdmin, async (req, res) => {
   try {

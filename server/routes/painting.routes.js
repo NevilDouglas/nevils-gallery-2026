@@ -56,10 +56,23 @@ function buildPaintingPayload(req) {
  * /api/paintings:
  *   get:
  *     summary: Haal alle paintings op
+ *     description: Retourneert de volledige lijst van paintings, oplopend gesorteerd op titel.
  *     tags: [Paintings]
  *     responses:
  *       200:
  *         description: Lijst van paintings
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Painting'
+ *       500:
+ *         description: Interne serverfout
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get("/", async (_req, res) => {
   try {
@@ -79,12 +92,47 @@ router.get("/", async (_req, res) => {
  * /api/paintings:
  *   post:
  *     summary: Maak een painting aan
+ *     description: Maakt een nieuwe painting aan. Alleen toegankelijk voor ingelogde admins.
  *     tags: [Paintings]
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/PaintingMultipartInput'
  *     responses:
  *       201:
  *         description: Painting aangemaakt
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Painting'
+ *       400:
+ *         description: Ongeldige input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Niet ingelogd
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Geen admin
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Interne serverfout
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post("/", requireAuth, requireAdmin, upload.single("image"), async (req, res) => {
   try {
@@ -114,13 +162,59 @@ router.post("/", requireAuth, requireAdmin, upload.single("image"), async (req, 
 });
 
 /**
- * Painting bijwerken.
- *
- * Let op:
- * - upload is optioneel;
- * - zonder nieuw bestand blijft de bestaande afbeelding behouden;
- * - bij een nieuw bestand verwijderen we alleen oude uploadbestanden,
- *   nooit de originele vaste assets uit /assets/img.
+ * @swagger
+ * /api/paintings/{id}:
+ *   put:
+ *     summary: Werk een painting bij
+ *     description: Werkt een bestaande painting bij. Alleen toegankelijk voor ingelogde admins.
+ *     tags: [Paintings]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Het id van de painting
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/PaintingMultipartInput'
+ *     responses:
+ *       200:
+ *         description: Painting bijgewerkt
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Painting'
+ *       401:
+ *         description: Niet ingelogd
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Geen admin
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Painting niet gevonden
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Interne serverfout
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.put("/:id", requireAuth, requireAdmin, upload.single("image"), async (req, res) => {
   try {
@@ -163,9 +257,53 @@ router.put("/:id", requireAuth, requireAdmin, upload.single("image"), async (req
 });
 
 /**
- * Painting verwijderen.
- *
- * Hierbij verwijderen we ook een oud uploadbestand als dat erbij hoort.
+ * @swagger
+ * /api/paintings/{id}:
+ *   delete:
+ *     summary: Verwijder een painting
+ *     description: Verwijdert een painting op basis van id. Alleen toegankelijk voor ingelogde admins.
+ *     tags: [Paintings]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Het id van de painting
+ *     responses:
+ *       200:
+ *         description: Painting verwijderd
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessMessageResponse'
+ *       401:
+ *         description: Niet ingelogd
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Geen admin
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Painting niet gevonden
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Interne serverfout
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.delete("/:id", requireAuth, requireAdmin, async (req, res) => {
   try {
