@@ -36,3 +36,76 @@ nevils-gallery-2026/
 ├── server/
 ├── README.md
 └── .gitignore
+
+
+# Nevil's Gallery 2026
+
+## Installatie
+
+### 1. Backend installeren
+
+```bash cd server npm install ```
+
+### 2. Frontend installeren
+
+```bash cd client npm install ```
+
+---
+
+## Database setup
+
+### PostgreSQL installeren
+
+Zorg dat PostgreSQL draait op poort **5432**.
+
+### Database aanmaken
+
+```sql **CREATE** **DATABASE** db_nevils_gallery; ```
+
+### Database importeren
+
+```bash psql -U postgres -d db_nevils_gallery -f server/database.sql ```
+
+---
+
+## Environment variabelen
+
+Kopieer:
+
+``` server/.env.example → server/.env ```
+
+Vul in:
+
+- DB_USER
+- DB_PASSWORD
+- JWT_SECRET
+
+---
+
+## Starten van de app
+
+### Backend
+
+```bash cd server npm run dev ```
+
+### Frontend
+
+```bash cd client npm run dev ```
+
+---
+
+## API documentatie
+
+Swagger:
+
+``` [http://localhost:**4000**/api-docs](http://localhost:**4000**/api-docs) ```
+
+---
+
+## Belangrijk
+
+- Uploads worden lokaal opgeslagen in:
+
+``` server/public/assets/uploads ```
+
+- Zorg dat deze map bestaat

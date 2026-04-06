@@ -3,10 +3,12 @@
  *
  * Belangrijke punten:
  * - API_BASE_URL wijst naar de backend-API
- * - buildAssetUrl maakt van relatieve paden een bruikbare URL
+ * - buildAssetUrl wordt centraal hergebruikt vanuit ../utils/buildAssetUrl
  * - dit werkt zowel voor bestaande paden zoals /assets/img/...
  *   als voor nieuwe uploads onder /assets/uploads/...
  */
+
+import { buildAssetUrl } from "../utils/buildAssetUrl";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000/api";
 
@@ -57,27 +59,16 @@ async function request(endpoint, options = {}) {
 }
 
 /**
- * Zet een relatieve afbeeldings- of assetwaarde om naar een volledige URL.
+ * Exporteer de helper opnieuw vanuit deze API-laag,
+ * zodat bestaande imports zoals:
+ * import { buildAssetUrl } from "../services/api";
+ * gewoon kunnen blijven werken.
  *
- * Voorbeelden:
- * - /assets/img/The_Mona_Lisa.jpg
- * - /assets/img/initials/Starry_Night.jpg
- * - /assets/uploads/1719999999999-custom.jpg
- *
- * Externe URLs laten we ongemoeid.
+ * Let op:
+ * - We definiëren de functie hier NIET opnieuw.
+ * - Daarmee lossen we de dubbele declaratie op.
  */
-export function buildAssetUrl(assetPath) {
-  if (!assetPath) {
-    return "";
-  }
-
-  if (assetPath.startsWith("http://") || assetPath.startsWith("https://")) {
-    return assetPath;
-  }
-
-  const apiOrigin = API_BASE_URL.replace(/\/api$/, "");
-  return `${apiOrigin}${assetPath}`;
-}
+export { buildAssetUrl };
 
 /**
  * Loginrequest.

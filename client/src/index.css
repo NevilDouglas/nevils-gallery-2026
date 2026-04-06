@@ -452,6 +452,37 @@ textarea:focus {
   color: var(--error);
 }
 
+/* Thumbnail-stijl buiten mediaquery zetten, zodat deze altijd geldig is */
+.dashboard-thumbnail {
+  width: 84px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid rgba(109, 76, 65, 0.14);
+  background: #efe5d5;
+}
+
+.password-input-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.password-toggle-button {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.password-toggle-button:hover {
+  background: rgba(109, 76, 65, 0.08);
+}
+
 @media (max-width: 960px) {
   .hero-grid,
   .dashboard-grid,
@@ -475,6 +506,19 @@ textarea:focus {
   .main-nav {
     width: 100%;
     justify-content: flex-start;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .main-nav a,
+  .main-nav .nav-button {
+    width: auto;
+  }
+
+  .main-nav .nav-button {
+    padding: 0.6rem 0.9rem;
   }
 
   .hero-section,
@@ -488,52 +532,5 @@ textarea:focus {
 
   .brand-text {
     font-size: 1rem;
-  }
-
-  .password-input-row {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 0.75rem;
-    align-items: center;
-  }
-
-  .password-toggle-button {
-    border: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.92);
-    color: var(--text);
-    border-radius: 14px;
-    padding: 0.9rem 1rem;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-
-  .password-toggle-button:hover {
-    background: rgba(109, 76, 65, 0.08);
-  }
-
-  .dashboard-thumbnail {
-    width: 84px;
-    height: 56px;
-    object-fit: cover;
-    border-radius: 10px;
-    border: 1px solid rgba(109, 76, 65, 0.14);
-    background: #efe5d5;
-  }
-    .main-nav {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-
-  .main-nav .nav-button {
-    padding: 0.6rem 0.9rem;
-  }
-
-  @media (max-width: 640px) {
-    .main-nav a,
-    .main-nav .nav-button {
-      width: auto;
-    }
   }
 }

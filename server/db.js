@@ -1,36 +1,61 @@
 /**
  * Centrale databaseverbinding via Sequelize.
  *
- * Dit bestand:
- * - leest de database-instellingen uit de environment variables
- * - maakt één gedeelde Sequelize-connectie aan
- * - exporteert die connectie zodat modellen en de server deze kunnen gebruiken
+ * Ondersteunt:
+ * - DATABASE_URL (voor Heroku / deployment)
+ * - DB_* variabelen (voor lokale development)
  *
  * Belangrijk:
- * - We wijzigen hiermee de database-structuur niet.
- * - We gebruiken alleen de bestaande PostgreSQL-database zoals die al is ingericht.
+ * - Wijzig niets aan de database zelf
+ * - Alleen connectieconfiguratie
  */
 
 const { Sequelize } = require("sequelize");
 
+// Zorg dat .env ALTIJD geladen wordt (ook als db.js direct gebruikt wordt)
+require("dotenv").config();
+
+let sequelize;
+
 /**
- * Maak een Sequelize-instantie aan op basis van de .env-configuratie.
- *
- * Vereiste variabelen:
- * - DB_NAME
- * - DB_USER
- * - DB_PASSWORD
- * - DB_HOST
+ * ============================================================
+ * PRIORITEIT 1: DATABASE_URL (deployment / Heroku)
+ * ============================================================
  */
-const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
-  {
-    host: process.env.DB_HOST,
+console.log("DATABASE_URL aanwezig:", Boolean(process.env.DATABASE_URL));
+
+if (process.env.DATABASE_URL) {
+  sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: "postgres",
-    logging: false
-  }
-);
+    logging: false,
+    dialectOptions: {
+      ssl:
+        process.env.NODE_ENV === "production"
+          ? { require: true, rejectUnauthorized: false }
+          : false
+    }
+  });
+
+  console.log("🌍 Database via DATABASE_URL");
+} else {
+  /**
+   * ============================================================
+   * PRIORITEIT 2: Lokale configuratie
+   * ============================================================
+   */
+  sequelize = new Sequelize(
+    process.env.DB_DATABASE || process.env.DB_NAME,
+    process.env.DB_USER,
+    process.env.DB_PASSWORD,
+    {
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT || 5432,
+      dialect: "postgres",
+      logging: false
+    }
+  );
+
+  console.log("💻 Database via lokale config");
+}
 
 module.exports = sequelize;
