@@ -5,13 +5,16 @@
  * - welke pagina bij welke route hoort
  * - dat de navbar op alle pagina's zichtbaar is
  * - dat de dashboardpagina alleen toegankelijk is voor een ingelogde admin
+ * - dat de footer op alle pagina's zichtbaar is
  */
 
 import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import Gallery from "./pages/Gallery";
+import About from "./pages/About";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
@@ -25,6 +28,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/gallery" element={<Gallery />} />
+          <Route path="/about" element={<About />} />
           <Route path="/login" element={<Login />} />
 
           <Route
@@ -39,6 +43,8 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
+
+      <Footer />
     </div>
   );
 }

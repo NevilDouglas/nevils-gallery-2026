@@ -8,7 +8,7 @@
  *   als voor nieuwe uploads onder /assets/uploads/...
  */
 
-import { buildAssetUrl } from "../utils/buildAssetUrl";
+import { buildAssetUrl as buildAssetUrlHelper } from "../utils/buildAssetUrl";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000/api";
 
@@ -59,16 +59,18 @@ async function request(endpoint, options = {}) {
 }
 
 /**
- * Exporteer de helper opnieuw vanuit deze API-laag,
- * zodat bestaande imports zoals:
- * import { buildAssetUrl } from "../services/api";
- * gewoon kunnen blijven werken.
+ * Zet een relatieve afbeeldings- of assetwaarde om naar een volledige URL.
  *
- * Let op:
- * - We definiëren de functie hier NIET opnieuw.
- * - Daarmee lossen we de dubbele declaratie op.
+ * Voorbeelden:
+ * - /assets/img/The_Mona_Lisa.jpg
+ * - /assets/img/initials/Starry_Night.jpg
+ * - /assets/uploads/1719999999999-custom.jpg
+ *
+ * Externe URLs laten we ongemoeid.
  */
-export { buildAssetUrl };
+export function buildAssetUrl(assetPath) {
+  return buildAssetUrlHelper(assetPath, API_BASE_URL);
+}
 
 /**
  * Loginrequest.
@@ -120,6 +122,18 @@ export function updatePainting(id, formData) {
 export function deletePainting(id) {
   return request(`/paintings/${id}`, {
     method: "DELETE",
+    headers: getAuthHeaders()
+  });
+}
+
+/**
+ * Reset alle paintings naar de oorspronkelijke dataset.
+ *
+ * Alleen bedoeld voor admins.
+ */
+export function resetPaintingsToInitialDataset() {
+  return request("/paintings/reset", {
+    method: "POST",
     headers: getAuthHeaders()
   });
 }

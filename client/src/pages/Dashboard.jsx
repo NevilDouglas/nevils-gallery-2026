@@ -5,9 +5,12 @@
  * - paintings kunnen nu met bestand-upload worden aangemaakt of bijgewerkt
  * - bestaande paintings behouden hun huidige image-pad als er geen nieuw bestand gekozen wordt
  * - users blijven JSON-gebaseerd, omdat de bestaande tabel geen afbeelding ondersteunt
+ * - CRUD-acties tonen nu óók een tijdelijke centrale statusmelding
+ * - admins kunnen paintings resetten naar de oorspronkelijke dataset
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   buildAssetUrl,
   createPainting,
@@ -16,6 +19,7 @@ import {
   deleteUser,
   getPaintings,
   getUsers,
+  resetPaintingsToInitialDataset,
   updatePainting,
   updateUser
 } from "../services/api";
@@ -40,6 +44,8 @@ const emptyUserForm = {
 };
 
 function Dashboard() {
+  const navigate = useNavigate();
+
   const [activeTab, setActiveTab] = useState("paintings");
   const [paintings, setPaintings] = useState([]);
   const [users, setUsers] = useState([]);
@@ -49,8 +55,39 @@ function Dashboard() {
   const [editingUserId, setEditingUserId] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [overlayMessage, setOverlayMessage] = useState("");
+  const [overlayType, setOverlayType] = useState("success");
+  const [showUserPassword, setShowUserPassword] = useState(false);
+  const [isResettingPaintings, setIsResettingPaintings] = useState(false);
+
+  const overlayTimeoutRef = useRef(null);
 
   const ownerOptions = useMemo(() => users, [users]);
+
+  /**
+   * Toont zowel de gewone statusmelding op de pagina
+   * als de tijdelijke gecentreerde overlaymelding.
+   */
+  const showFeedback = (type, text) => {
+    if (type === "error") {
+      setError(text);
+      setMessage("");
+    } else {
+      setMessage(text);
+      setError("");
+    }
+
+    setOverlayType(type);
+    setOverlayMessage(text);
+
+    if (overlayTimeoutRef.current) {
+      clearTimeout(overlayTimeoutRef.current);
+    }
+
+    overlayTimeoutRef.current = setTimeout(() => {
+      setOverlayMessage("");
+    }, 3000);
+  };
 
   /**
    * Haalt paintings en users opnieuw op.
@@ -67,12 +104,18 @@ function Dashboard() {
       setPaintings(Array.isArray(paintingData) ? paintingData : []);
       setUsers(Array.isArray(userData) ? userData : []);
     } catch (err) {
-      setError(err.message || "Failed to load dashboard data");
+      showFeedback("error", err.message || "Failed to load dashboard data");
     }
   };
 
   useEffect(() => {
     loadData();
+
+    return () => {
+      if (overlayTimeoutRef.current) {
+        clearTimeout(overlayTimeoutRef.current);
+      }
+    };
   }, []);
 
   const resetPaintingForm = () => {
@@ -83,6 +126,7 @@ function Dashboard() {
   const resetUserForm = () => {
     setUserForm(emptyUserForm);
     setEditingUserId("");
+    setShowUserPassword(false);
   };
 
   /**
@@ -137,23 +181,20 @@ function Dashboard() {
     event.preventDefault();
 
     try {
-      setMessage("");
-      setError("");
-
       const formData = buildPaintingFormData();
 
       if (editingPaintingId) {
         await updatePainting(editingPaintingId, formData);
-        setMessage("Painting updated successfully.");
+        showFeedback("success", "Painting updated successfully.");
       } else {
         await createPainting(formData);
-        setMessage("Painting created successfully.");
+        showFeedback("success", "Painting created successfully.");
       }
 
       resetPaintingForm();
       await loadData();
     } catch (err) {
-      setError(err.message || "Failed to save painting");
+      showFeedback("error", err.message || "Failed to save painting");
     }
   };
 
@@ -164,9 +205,6 @@ function Dashboard() {
     event.preventDefault();
 
     try {
-      setMessage("");
-      setError("");
-
       if (editingUserId) {
         const payload = { ...userForm };
 
@@ -175,16 +213,16 @@ function Dashboard() {
         }
 
         await updateUser(editingUserId, payload);
-        setMessage("User updated successfully.");
+        showFeedback("success", "User updated successfully.");
       } else {
         await createUser(userForm);
-        setMessage("User created successfully.");
+        showFeedback("success", "User created successfully.");
       }
 
       resetUserForm();
       await loadData();
     } catch (err) {
-      setError(err.message || "Failed to save user");
+      showFeedback("error", err.message || "Failed to save user");
     }
   };
 
@@ -224,6 +262,8 @@ function Dashboard() {
       username: user.username || "",
       password: ""
     });
+
+    setShowUserPassword(false);
   };
 
   /**
@@ -231,14 +271,11 @@ function Dashboard() {
    */
   const handleDeletePainting = async (id) => {
     try {
-      setMessage("");
-      setError("");
-
       await deletePainting(id);
-      setMessage("Painting deleted successfully.");
+      showFeedback("success", "Painting deleted successfully.");
       await loadData();
     } catch (err) {
-      setError(err.message || "Failed to delete painting");
+      showFeedback("error", err.message || "Failed to delete painting");
     }
   };
 
@@ -247,19 +284,68 @@ function Dashboard() {
    */
   const handleDeleteUser = async (id) => {
     try {
-      setMessage("");
-      setError("");
-
       await deleteUser(id);
-      setMessage("User deleted successfully.");
+      showFeedback("success", "User deleted successfully.");
       await loadData();
     } catch (err) {
-      setError(err.message || "Failed to delete user");
+      showFeedback("error", err.message || "Failed to delete user");
     }
+  };
+
+  /**
+   * Reset alle paintings naar de oorspronkelijke dataset.
+   *
+   * Let op:
+   * - Alleen paintings worden gereset
+   * - users blijven ongewijzigd
+   * - lopende bewerkingen in het paintingformulier worden gewist
+   */
+  const handleResetPaintings = async () => {
+    const confirmed = window.confirm(
+      "Weet je zeker dat je alle paintings wilt resetten naar de oorspronkelijke dataset?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setIsResettingPaintings(true);
+
+      await resetPaintingsToInitialDataset();
+      resetPaintingForm();
+      showFeedback("success", "Paintings reset to the original dataset.");
+      await loadData();
+    } catch (err) {
+      showFeedback("error", err.message || "Failed to reset paintings");
+    } finally {
+      setIsResettingPaintings(false);
+    }
+  };
+
+  /**
+   * Brengt de gebruiker zonder wijzigingen terug naar de vorige pagina.
+   */
+  const handleCancel = () => {
+    navigate(-1);
   };
 
   return (
     <section className="section-spacing">
+      {overlayMessage && (
+        <div className="status-overlay-wrapper" aria-live="polite" aria-atomic="true">
+          <div
+            className={
+              overlayType === "error"
+                ? "status-overlay status-overlay-error"
+                : "status-overlay status-overlay-success"
+            }
+          >
+            {overlayMessage}
+          </div>
+        </div>
+      )}
+
       <div className="container">
         <div className="section-header">
           <p className="eyebrow">Administration</p>
@@ -293,7 +379,18 @@ function Dashboard() {
         {activeTab === "paintings" && (
           <div className="dashboard-grid">
             <div className="museum-panel">
-              <h2>{editingPaintingId ? "Edit painting" : "Add painting"}</h2>
+              <div className="dashboard-section-header">
+                <h2>{editingPaintingId ? "Edit painting" : "Add painting"}</h2>
+
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={handleResetPaintings}
+                  disabled={isResettingPaintings}
+                >
+                  {isResettingPaintings ? "Resetting..." : "Reset original paintings"}
+                </button>
+              </div>
 
               <form className="form-grid" onSubmit={handlePaintingSubmit}>
                 <div className="form-field">
@@ -391,6 +488,14 @@ function Dashboard() {
                     onClick={resetPaintingForm}
                   >
                     Clear
+                  </button>
+
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={handleCancel}
+                  >
+                    Cancel
                   </button>
                 </div>
               </form>
@@ -513,14 +618,26 @@ function Dashboard() {
                   <label htmlFor="password">
                     Password {editingUserId ? "(leave blank to keep current password)" : ""}
                   </label>
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    value={userForm.password}
-                    onChange={handleUserChange}
-                    required={!editingUserId}
-                  />
+
+                  <div className="password-input-row">
+                    <input
+                      id="password"
+                      name="password"
+                      type={showUserPassword ? "text" : "password"}
+                      value={userForm.password}
+                      onChange={handleUserChange}
+                      required={!editingUserId}
+                    />
+
+                    <button
+                      type="button"
+                      className="password-toggle-button"
+                      onClick={() => setShowUserPassword((previousState) => !previousState)}
+                      aria-label={showUserPassword ? "Hide password" : "Show password"}
+                    >
+                      {showUserPassword ? "Hide" : "Show"}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="form-field">
@@ -547,6 +664,14 @@ function Dashboard() {
                     onClick={resetUserForm}
                   >
                     Clear
+                  </button>
+
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={handleCancel}
+                  >
+                    Cancel
                   </button>
                 </div>
               </form>

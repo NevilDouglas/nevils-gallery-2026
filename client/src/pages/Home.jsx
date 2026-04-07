@@ -7,8 +7,11 @@
  */
 
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function Home() {
+  const { isAuthenticated } = useAuth();
+
   return (
     <section className="hero-section">
       <div className="container hero-grid">
@@ -27,9 +30,11 @@ function Home() {
               Explore Gallery
             </Link>
 
-            <Link to="/login" className="secondary-button">
-              Admin Login
-            </Link>
+            {!isAuthenticated && (
+              <Link to="/login" className="secondary-button">
+                User Login
+              </Link>
+            )}
           </div>
         </div>
 

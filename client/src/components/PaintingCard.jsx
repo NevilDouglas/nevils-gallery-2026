@@ -5,6 +5,9 @@
  * - bestaande databasepaden zoals /assets/img/initials/...
  * - nieuwe uploadpaden zoals /assets/uploads/...
  * - externe URLs als die nog in oude data voorkomen
+ *
+ * Extra:
+ * - de afbeelding zoomt subtiel in bij hover voor een duidelijker gallery-effect
  */
 
 import { buildAssetUrl } from "../services/api";

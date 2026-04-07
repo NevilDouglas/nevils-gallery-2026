@@ -2,8 +2,8 @@
  * Navigatiebalk van de applicatie.
  *
  * Gewenst gedrag:
- * - als niemand is ingelogd: Login zichtbaar
- * - als iemand is ingelogd: Login volledig verbergen
+ * - als niemand is ingelogd: User Login zichtbaar
+ * - als iemand is ingelogd: User Login volledig verbergen
  * - als admin is ingelogd: Dashboard zichtbaar
  * - uitloggen zet gebruiker terug naar home
  */
@@ -33,6 +33,8 @@ function Navbar() {
           <NavLink to="/gallery">Gallery</NavLink>
 
           {isAuthenticated && isAdmin && <NavLink to="/dashboard">Dashboard</NavLink>}
+
+          <NavLink to="/about">About</NavLink>  
 
           {!isAuthenticated && <NavLink to="/login">Login</NavLink>}
 
