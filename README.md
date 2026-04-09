@@ -2,115 +2,155 @@
 
 Een modern vormgegeven webapplicatie voor het beheren en bekijken van schilderijen uit een persoonlijke collectie.
 
+**GitHub:** [github.com/NevilDouglas/nevils-gallery-2026](https://github.com/NevilDouglas/nevils-gallery-2026)
+
+---
+
 ## Technologie
 
 ### Frontend
-- React
+- React 18
 - Vite
 - React Router
 
 ### Backend
-- Node.js
-- Express
-- Sequelize
+- Node.js + Express
+- Sequelize ORM
 - PostgreSQL
 - JWT-authenticatie
-- Multer voor afbeeldingsuploads
-- Swagger voor API-documentatie
+- Multer (afbeeldingsuploads)
+- Swagger (API-documentatie)
 
-## Belangrijke ontwerpkeuzes (in relatie tot een vorige versie)
-
-- De bestaande PostgreSQL-database blijft ongewijzigd.
-- De applicatie sluit aan op de bestaande tabellen:
-  - `schema_nevils_gallery.users`
-  - `schema_nevils_gallery.paintings`
-- De kolom `image` blijft een tekstkolom en bevat relatieve paden.
-- Bestaande schilderijafbeeldingen blijven bruikbaar.
-- Nieuwe uploads worden opgeslagen onder `server/public/assets/uploads`.
+---
 
 ## Projectstructuur
 
-```text
+```
 nevils-gallery-2026/
-├── client/
-├── server/
-├── README.md
-└── .gitignore
+├── client/          # React frontend (Vite)
+├── server/          # Express backend
+│   ├── models/
+│   ├── routes/
+│   ├── middleware/
+│   ├── public/      # Statische bestanden & uploads
+│   └── index.js
+├── Procfile         # Heroku startcommando
+├── package.json     # Root build-script voor Heroku
+└── README.md
+```
 
+---
 
-# Nevil's Gallery 2026
+## Lokale installatie
 
-## Installatie
+### 1. Backend
 
-### 1. Backend installeren
+```bash
+cd server
+npm install
+```
 
-```bash cd server npm install ```
+Maak een `.env` bestand aan in de `server/` map:
 
-### 2. Frontend installeren
+```env
+PORT=4000
+DB_NAME=db_nevils_gallery
+DB_USER=postgres
+DB_PASSWORD=jouwwachtwoord
+DB_HOST=localhost
+JWT_SECRET=eensterkgeheim
+```
 
-```bash cd client npm install ```
+### 2. Frontend
+
+```bash
+cd client
+npm install
+```
+
+Maak een `.env` bestand aan in de `client/` map:
+
+```env
+VITE_API_BASE_URL=http://localhost:4000/api
+```
 
 ---
 
 ## Database setup
 
-### PostgreSQL installeren
+Zorg dat PostgreSQL draait op poort **5432** en maak een database aan:
 
-Zorg dat PostgreSQL draait op poort **5432**.
+```sql
+CREATE DATABASE db_nevils_gallery;
+```
 
-### Database aanmaken
+Importeer de initiële data:
 
-```sql **CREATE** **DATABASE** db_nevils_gallery; ```
-
-### Database importeren
-
-```bash psql -U postgres -d db_nevils_gallery -f server/database.sql ```
-
----
-
-## Environment variabelen
-
-Kopieer:
-
-``` server/.env.example → server/.env ```
-
-Vul in:
-
-- DB_USER
-- DB_PASSWORD
-- JWT_SECRET
+```bash
+psql -U postgres -d db_nevils_gallery -f server/database.sql
+```
 
 ---
 
-## Starten van de app
+## Starten
 
 ### Backend
 
-```bash cd server npm run dev ```
+```bash
+cd server
+npm run dev
+```
 
 ### Frontend
 
-```bash cd client npm run dev ```
+```bash
+cd client
+npm run dev
+```
+
+De app is bereikbaar op `http://localhost:5173`.
 
 ---
 
-## API documentatie
+## API-documentatie
 
-Swagger:
+Swagger UI is beschikbaar op:
 
-``` [http://localhost:**4000**/api-docs](http://localhost:**4000**/api-docs) ```
+```
+http://localhost:4000/api-docs
+```
 
 ---
-
-## Belangrijk
-
-- Uploads worden lokaal opgeslagen in:
-
-``` server/public/assets/uploads ```
-
-- Zorg dat deze map bestaat
 
 ## Inloggen
 
-- Username: admin@example.com
-- Password: passwordadmin
+| Veld     | Waarde              |
+|----------|---------------------|
+| E-mail   | admin@example.com   |
+| Wachtwoord | passwordadmin     |
+
+---
+
+## Deployment (Heroku)
+
+De app is geconfigureerd voor deployment als één Heroku-app. De Express-server serveert zowel de API als de gebouwde React-frontend.
+
+```bash
+heroku create <app-naam>
+heroku addons:create heroku-postgresql:essential-0
+heroku config:set NODE_ENV=production
+heroku config:set JWT_SECRET=<sterk_geheim>
+heroku config:set VITE_API_BASE_URL=/api
+git push heroku main
+```
+
+> Geüploade afbeeldingen worden opgeslagen in `server/public/assets/uploads/`. Op Heroku gaan deze verloren bij een nieuwe deploy (ephemeral filesystem).
+
+---
+
+## Ontwerpkeuzes
+
+- De PostgreSQL-database blijft ongewijzigd ten opzichte van de vorige versie.
+- De applicatie sluit aan op de bestaande tabellen `schema_nevils_gallery.users` en `schema_nevils_gallery.paintings`.
+- De kolom `image` bevat relatieve paden (tekstkolom).
+- Nieuwe uploads worden opgeslagen onder `server/public/assets/uploads/`.

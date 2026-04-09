@@ -40,7 +40,10 @@ app.use(
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin:
+      process.env.NODE_ENV === "production"
+        ? process.env.CLIENT_URL || true
+        : ["http://localhost:5173", "http://localhost:5174"],
     credentials: false
   })
 );
@@ -58,6 +61,15 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/auth", authRoutes);
 app.use("/api/paintings", paintingRoutes);
 app.use("/api/users", userRoutes);
+
+if (process.env.NODE_ENV === "production") {
+  const clientBuildPath = path.join(__dirname, "..", "client", "dist");
+  app.use(express.static(clientBuildPath));
+
+  app.get("*", (_req, res) => {
+    res.sendFile(path.join(clientBuildPath, "index.html"));
+  });
+}
 
 app.use((err, _req, res, _next) => {
   console.error("Unhandled server error:", err);
