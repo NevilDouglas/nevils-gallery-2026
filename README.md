@@ -109,3 +109,8 @@ Swagger:
 ``` server/public/assets/uploads ```
 
 - Zorg dat deze map bestaat
+
+## Inloggen
+
+- Username: admin@example.com
+- Password: passwordadmin
